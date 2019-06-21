@@ -1,0 +1,47 @@
+---
+
+org: 'my-org'
+name: 'my-dummy-repo'
+private: true
+# description:
+# homepage:
+
+topics:
+  - yaml
+  - developer
+
+teams:
+  - 'team1:pull'
+  - 'team2:push'
+  - 'team3:admin'
+
+feats:
+  issues: false
+  # projects: false
+  # wiki: false
+
+pull_requests:
+  # merge: false
+  rebase: true
+  squash: true
+
+protected_branches:
+  - branch: master
+    protections:
+      required_status_checks:
+        strict: true
+        contexts: []
+      enforce_admins: true
+      required_pull_request_reviews:
+        required_approving_review_count: 1
+      restrictions:
+
+security:
+  vulnerability_alerts: true
+
+integrations:
+  CircleCI: true
+
+secrets:
+  github: 0e3e789b2024d4be0c26f732f88176eac8eea4ae
+  circle_ci: 6ccf3590490846771ac6287517a0c21d6e5e4237

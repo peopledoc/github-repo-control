@@ -1,5 +1,5 @@
 {
-  "name": "github-repo-settings-template",
+  "name": "github-repo-control",
   "version": "0.0.0",
   "description": "Easily configure your Github repositories",
   "main": "index.js",

@@ -1,0 +1,20 @@
+{
+  "name": "github-repo-settings-template",
+  "version": "0.0.0",
+  "description": "Easily configure your Github repositories",
+  "main": "index.js",
+  "author": "Xavier Cambar <xcambar@gmail.com>",
+  "license": "MIT",
+  "scripts": {
+    "start": "node bin/cli.js"
+  },
+  "bin": "./bin/cli",
+  "dependencies": {
+    "@octokit/rest": "^16.27.3",
+    "axios": "^0.19.0",
+    "js-yaml": "^3.13.1",
+    "lodash.merge": "^4.6.1",
+    "ora": "^3.4.0",
+    "yargs": "^13.2.4"
+  }
+}

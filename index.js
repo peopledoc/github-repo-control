@@ -13,24 +13,27 @@ function __asyncIter(iterable, fn) {
   }, Promise.resolve([]))
 }
 
-
 async function run(_confPath) {
-  let settings  = yaml.safeLoad(fs.readFileSync(_confPath, 'utf8'));
-  let org       = settings.org
-  let name      = settings.name
-  let branch    = 'master'
-  let circle_token = settings.secrets.circle_ci
-  let github_token = settings.secrets.github
-  const octokit = Octokit({
+  const settings      = yaml.safeLoad(fs.readFileSync(_confPath, 'utf8'));
+  const name          = settings.name
+  const circle_token  = settings.secrets.circle_ci
+  const github_token  = settings.secrets.github
+  const octokit     = Octokit({
     auth: github_token,
     previews: ['luke-cage-preview', 'mercy-preview']
   })
 
 
+  let owner = settings.org
+  if (!owner) {
+    ora.start('Finding current user')
+    owner = (await octokit.users.getAuthenticated()).data.login
+    ora.succeed()
+  }
 
-  ora.start(`Create the repo "${name}"`)
+  ora.start(`Create the repo "${owner}/${name}"`)
   let repo = await octokit.repos.createInOrg({
-    org,
+    org: owner,
     name,
     description: settings.description,
     homepage: settings.homepage,
@@ -48,6 +51,7 @@ async function run(_confPath) {
 
 
   if (settings.org) {
+    let { org } = settings
     let teamsIDs = await __asyncIter(settings.teams, async function(team) {
       let [
         team_slug,
@@ -80,7 +84,7 @@ async function run(_confPath) {
   if (settings.topics) {
     ora.start('Add topics to the repository')
     await octokit.repos.replaceTopics({
-      owner: org,
+      owner,
       repo: name,
       names: settings.topics
     })
@@ -98,7 +102,7 @@ async function run(_confPath) {
           restrictions: null
         },
         protections,
-        { owner: org, repo: name, branch },
+        { owner, repo: name, branch },
 
       )
       ora.start(`Apply protections for branch "${branch}"`)
@@ -113,7 +117,7 @@ async function run(_confPath) {
   if (settings.security.vulnerability_alerts) {
     ora.start('Enable vulnerability alerts')
     await octokit.repos.enableVulnerabilityAlerts({
-      owner: org,
+      owner,
       repo: name
     })
     ora.succeed()
@@ -121,24 +125,23 @@ async function run(_confPath) {
 
   if (settings.integrations.CircleCI) {
     ora.start('Activate CircleCI')
-    let url = `https://circleci.com/api/v1.1/project/github/${org}/${name}/follow?circle-token=${circle_token}`
+    let url = `https://circleci.com/api/v1.1/project/github/${owner}/${name}/follow?circle-token=${circle_token}`
     await axios.post(url)
     ora.succeed()
   }
 }
 
-
-
 // async function rollback() {
 //   ora.warn(`Deleting repo ${name}`)
-//   await octokit.repos.delete({ owner: org, repo: name })
+//   await octokit.repos.delete({ owner: owner, repo: name })
 // }
 
 module.exports = async (conf)=> {
   try {
     await run(conf)
   } catch (e) {
-    e.message && ora.fail(e.message);
+    ora.isSpinning && ora.fail()
+    e.message && ora.fail(`Error: ${e.message}`);
     (e.errors || [])
       .map((e)=> e.message)
       .forEach((m)=> ora.fail(`Error: ${m}`))
